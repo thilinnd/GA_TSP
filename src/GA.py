@@ -205,8 +205,8 @@ def solve(problem,
           generations=100,
           mutation_rate=0.01,
           mutation_algorithm='swap',
-          crossover_algorithm='order',
-          selection_algorithm='elitism'):
+          crossover_algorithm='single_point',
+          selection_algorithm='tournament'):
     
     n_cities = len(problem)
     result = genetic_algorithm(
@@ -220,3 +220,114 @@ def solve(problem,
         crossover_algorithm=crossover_algorithm
     )
     return result['distance'], result['route'], result['fitness']
+
+#--------------------------------------------- RLGA ------------------------------------
+def solve_rlga(problem,
+               population_size=100,
+               generations=100,
+               mutation_rate=0.01,
+               crossover_algorithm='single_point',
+               selection_algorithm='tournament'):
+    
+    n_cities = len(problem)
+    mutation_algorithms = ['swap', 'scramble', 'inversion', 'insertion']
+
+    def rlga_mutate(route, base_rate):
+        algo = random.choice(mutation_algorithms)
+        return mutate(route, base_rate, algo)
+
+    def rlga_genetic_algorithm():
+        population = [generate_random_route(n_cities) for _ in range(population_size)]
+        fitness_history = []
+
+        for _ in range(generations):
+            fitness_scores = fitness(population, problem)
+            fitness_history.append(min(fitness_scores))
+            selected = selection(population, fitness_scores, selection_algorithm)
+            offspring = []
+
+            while len(offspring) < population_size:
+                p1, p2 = random.sample(selected, 2)
+                c1, c2 = crossover(p1, p2, crossover_algorithm)
+                offspring.append(rlga_mutate(c1, mutation_rate))
+                offspring.append(rlga_mutate(c2, mutation_rate))
+
+            population = offspring[:population_size]
+
+        final_fitness = fitness(population, problem)
+        best_idx = np.argmin(final_fitness)
+        best_route = population[best_idx] + [population[best_idx][0]]
+
+        return {
+            'route': [city + 1 for city in best_route],
+            'distance': final_fitness[best_idx],
+            'fitness': fitness_history
+        }
+
+    result = rlga_genetic_algorithm()
+    return result['distance'], result['route'], result['fitness']
+
+
+#--------------------------------------------- GASA ------------------------------------
+def simulated_annealing(route, distances, initial_temp=100, cooling_rate=0.995, min_temp=1e-3):
+    current = route[:]
+    best = current[:]
+    current_distance = compute_route_distance(current + [current[0]], distances)
+    best_distance = current_distance
+    temp = initial_temp
+
+    while temp > min_temp:
+        i, j = sorted(random.sample(range(1, len(route)), 2))
+        neighbor = current[:]
+        neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
+        neighbor_distance = compute_route_distance(neighbor + [neighbor[0]], distances)
+
+        delta = neighbor_distance - current_distance
+        if delta < 0 or random.random() < np.exp(-delta / temp):
+            current = neighbor
+            current_distance = neighbor_distance
+            if current_distance < best_distance:
+                best = current
+                best_distance = current_distance
+
+        temp *= cooling_rate
+
+    return best
+
+def solve_gasa(problem,
+               population_size=100,
+               generations=100,
+               mutation_rate=0.01,
+               mutation_algorithm='swap',
+               crossover_algorithm='single_point',
+               selection_algorithm='tournament'):
+    
+    n_cities = len(problem)
+
+    population = [generate_random_route(n_cities) for _ in range(population_size)]
+    fitness_history = []
+
+    for _ in range(generations):
+        fitness_scores = fitness(population, problem)
+        fitness_history.append(min(fitness_scores))
+        selected = selection(population, fitness_scores, selection_algorithm)
+        offspring = []
+
+        while len(offspring) < population_size:
+            p1, p2 = random.sample(selected, 2)
+            c1, c2 = crossover(p1, p2, crossover_algorithm)
+            offspring.append(mutate(c1, mutation_rate, mutation_algorithm))
+            offspring.append(mutate(c2, mutation_rate, mutation_algorithm))
+
+        population = offspring[:population_size]
+
+        # Simulated Annealing cải tiến cá thể tốt nhất
+        best_idx = np.argmin(fitness(population, problem))
+        improved = simulated_annealing(population[best_idx], problem)
+        population[best_idx] = improved
+
+    final_fitness = fitness(population, problem)
+    best_idx = np.argmin(final_fitness)
+    best_route = population[best_idx] + [population[best_idx][0]]
+
+    return final_fitness[best_idx], [city + 1 for city in best_route], fitness_history
