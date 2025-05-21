@@ -220,7 +220,6 @@ def solve(problem,
         crossover_algorithm=crossover_algorithm
     )
     return result['distance'], result['route'], result['fitness']
-
 #--------------------------------------------- RLGA ------------------------------------
 def solve_rlga(problem,
                population_size=100,
