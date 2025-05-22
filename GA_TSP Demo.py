@@ -460,6 +460,9 @@ class TSPGUI(tk.Tk):
             self.status_var.set("Lỗi: chưa chọn đủ thành phố")
             self.btn_process.config(state="normal")
             return
+        
+        # Sắp xếp các thành phố theo longitude, sau đó là latitude
+        selected_cities.sort(key=lambda city: (self.city_data[city][0], self.city_data[city][1]) if city in self.city_data else (float('inf'), float('inf')))
 
         # Đảm bảo thành phố xuất phát ở đầu mảng
         if start_city in selected_cities:
