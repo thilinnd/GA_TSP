@@ -44,7 +44,8 @@ def visualize(locations, route, title='Best Route'):
         G.add_node(i, pos=(lon, lat))  # Note: lon = x, lat = y
 
     edges = [(route[i], route[i + 1]) for i in range(len(route) - 1)]
-    edges.append((route[-1], route[0]))  # quay về điểm đầu
+    if route[-1] != route[0]:
+        edges.append((route[-1], route[0]))  # chỉ nối nếu điểm cuối khác điểm đầu
     G.add_edges_from(edges)
 
     pos = nx.get_node_attributes(G, 'pos')
