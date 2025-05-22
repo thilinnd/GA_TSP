@@ -21,6 +21,10 @@ class TSPGUI(tk.Tk):
         self.city_vars = {}  # city name -> tk.BooleanVar()
         self.current_route = []  # Lưu trữ lộ trình hiện tại
         self.current_coords = []  # Lưu trữ tọa độ của lộ trình
+        
+        # Thêm biến để lưu lộ trình tốt nhất
+        self.best_route = []  # Lưu lộ trình tốt nhất
+        self.best_distance = float('inf')  # Lưu khoảng cách tốt nhất
 
         self.setup_ui()
         self.refresh_file_list()
@@ -441,6 +445,10 @@ class TSPGUI(tk.Tk):
         self.status_var.set("Đang chạy thuật toán...")
         self.progress_var.set(0)
         self.result_text.delete("1.0", tk.END)
+        
+        # Reset lộ trình tốt nhất
+        self.best_route = []
+        self.best_distance = float('inf')
 
         # Chạy thuật toán trên luồng riêng để không làm đơ giao diện
         threading.Thread(target=self.process).start()
@@ -497,21 +505,49 @@ class TSPGUI(tk.Tk):
         dist_matrix = src.TSP.compute_distance_matrix(valid_cities)
 
         try:
-            result = src.GA.genetic_algorithm(
-                n_cities=len(valid_cities),
-                distances=dist_matrix,
-                population_size=population,
-                generations=generations,
-                mutation_rate=mutation_rate,
-                mutation_algorithm=self.mut_algo_cb.get(),
-                selection_algorithm=self.sel_algo_cb.get(),
-                crossover_algorithm=self.cross_algo_cb.get()
-            )
-
-            if 'route' not in result or 'distance' not in result:
-                raise ValueError("Kết quả không hợp lệ")
-
+            # Chạy thuật toán nhiều lần để tìm lộ trình tốt nhất
+            num_runs = 5  # Số lần chạy để tìm kết quả tốt nhất
+            best_result = None
+            
+            for run in range(num_runs):
+                # Cập nhật progress bar
+                progress = (run / num_runs) * 100
+                self.progress_var.set(progress)
+                
+                # Chạy thuật toán
+                current_result = src.GA.genetic_algorithm(
+                    n_cities=len(valid_cities),
+                    distances=dist_matrix,
+                    population_size=population,
+                    generations=generations,
+                    mutation_rate=mutation_rate,
+                    mutation_algorithm=self.mut_algo_cb.get(),
+                    selection_algorithm=self.sel_algo_cb.get(),
+                    crossover_algorithm=self.cross_algo_cb.get()
+                )
+                
+                # Kiểm tra kết quả hợp lệ
+                if 'route' not in current_result or 'distance' not in current_result:
+                    continue
+                    
+                # So sánh với kết quả tốt nhất hiện tại
+                if (best_result is None or 
+                    current_result['distance'] < best_result['distance']):
+                    best_result = current_result.copy()
+                    self.best_distance = current_result['distance']
+                    self.best_route = current_result['route'].copy()
+                
+                # Cập nhật status
+                self.status_var.set(f"Đang chạy lần {run+1}/{num_runs}... Tốt nhất: {self.best_distance:.2f} km")
+            
+            # Sử dụng kết quả tốt nhất
+            if best_result is None:
+                raise ValueError("Không có kết quả hợp lệ")
+                
+            result = best_result
             route = [i % len(valid_city_names) for i in result['route']]
+            final_distance = result['distance']
+
             route_names_raw = [valid_city_names[i] for i in route]
 
             # Đưa start_city về đầu tuyến đường
@@ -543,19 +579,20 @@ class TSPGUI(tk.Tk):
             self.result_text.delete("1.0", tk.END)
             self.result_text.insert(tk.END, "🎯 KẾT QUẢ THUẬT TOÁN DI TRUYỀN TSP\n")
             self.result_text.insert(tk.END, "="*50 + "\n\n")
-            self.result_text.insert(tk.END, f"📍 Lộ trình tối ưu:\n")
+            self.result_text.insert(tk.END, f"⭐ LỘ TRÌNH TỐI ƯU NHẤT (Tốt nhất trong {num_runs} lần chạy):\n")
             self.result_text.insert(tk.END, f"   {' → '.join(unique_route)}\n\n")
-            self.result_text.insert(tk.END, f"📏 Tổng khoảng cách: {result['distance']:.2f} km\n")
+            self.result_text.insert(tk.END, f"📏 Tổng khoảng cách tối ưu: {final_distance:.2f} km\n")
             self.result_text.insert(tk.END, f"🏙️ Số thành phố: {len(unique_route)-1}\n")
-            self.result_text.insert(tk.END, f"🧬 Số thế hệ: {generations}\n")
+            self.result_text.insert(tk.END, f"🔄 Số lần chạy: {num_runs}\n")
+            self.result_text.insert(tk.END, f"🧬 Số thế hệ mỗi lần: {generations}\n")
             self.result_text.insert(tk.END, f"👥 Kích thước quần thể: {population}\n")
             self.result_text.insert(tk.END, f"🔄 Tỉ lệ đột biến: {mutation_rate}\n\n")
-            self.result_text.insert(tk.END, "🗺️ Nhấn 'Hiển thị bản đồ' để xem lộ trình trên ảnh vệ tinh!\n")
+            self.result_text.insert(tk.END, "🗺️ Nhấn 'Hiển thị bản đồ' để xem lộ trình tối ưu trên ảnh vệ tinh!\n")
 
             # Cập nhật thông tin bản đồ
             self.update_route_info()
 
-            self.status_var.set("Hoàn thành! Có thể xem bản đồ.")
+            self.status_var.set("Hoàn thành! Đã tìm được lộ trình tối ưu.")
             self.progress_var.set(100)
             
         except Exception as e:
@@ -573,18 +610,22 @@ class TSPGUI(tk.Tk):
             
         self.map_info_text.delete("1.0", tk.END)
         
-        self.map_info_text.insert(tk.END, "🎯 THÔNG TIN LỘ TRÌNH TỐI ƯU\n")
+        self.map_info_text.insert(tk.END, "🎯 THÔNG TIN LỘ TRÌNH TỐI ƯU NHẤT\n")
         self.map_info_text.insert(tk.END, "="*40 + "\n\n")
         
         # Thông tin tổng quan
         total_distance = 0
         self.map_info_text.insert(tk.END, f"🚩 Điểm xuất phát: {self.current_route[0]}\n")
         self.map_info_text.insert(tk.END, f"🏁 Điểm kết thúc: {self.current_route[-1]}\n")
-        self.map_info_text.insert(tk.END, f"🏙️ Số thành phố: {len(self.current_route)-1}\n\n")
+        self.map_info_text.insert(tk.END, f"🏙️ Số thành phố: {len(self.current_route)-1}\n")
+        if hasattr(self, 'best_distance') and self.best_distance < float('inf'):
+            self.map_info_text.insert(tk.END, f"📏 Khoảng cách tối ưu: {self.best_distance:.2f} km\n\n")
+        else:
+            self.map_info_text.insert(tk.END, "\n")
         
         # Chi tiết từng đoạn đường
-        self.map_info_text.insert(tk.END, "📍 CHI TIẾT LỘ TRÌNH:\n")
-        self.map_info_text.insert(tk.END, "-"*30 + "\n")
+        self.map_info_text.insert(tk.END, "📍 CHI TIẾT LỘ TRÌNH TỐI ƯU:\n")
+        self.map_info_text.insert(tk.END, "-"*35 + "\n")
         
         for i in range(len(self.current_route)-1):
             from_city = self.current_route[i]
@@ -600,17 +641,17 @@ class TSPGUI(tk.Tk):
                 
                 self.map_info_text.insert(tk.END, f"{i+1:2d}. {from_city:<15} → {to_city:<15} ({distance:.1f} km)\n")
         
-        self.map_info_text.insert(tk.END, f"\n📏 Tổng khoảng cách: {total_distance:.2f} km\n\n")
+        self.map_info_text.insert(tk.END, f"\n📏 Tổng khoảng cách tính toán: {total_distance:.2f} km\n\n")
         
         # Hướng dẫn sử dụng bản đồ
         self.map_info_text.insert(tk.END, "🗺️ CÁCH SỬ DỤNG BẢN ĐỒ:\n")
         self.map_info_text.insert(tk.END, "-"*25 + "\n")
-        self.map_info_text.insert(tk.END, "• Nhấn 'Hiển thị bản đồ' để xem lộ trình\n")
+        self.map_info_text.insert(tk.END, "• Nhấn 'Hiển thị bản đồ' để xem lộ trình tối ưu\n")
         self.map_info_text.insert(tk.END, "• Bản đồ sẽ mở trong trình duyệt web\n")
         self.map_info_text.insert(tk.END, "• Có thể chuyển đổi giữa ảnh vệ tinh và bản đồ đường\n")
         self.map_info_text.insert(tk.END, "• Sử dụng nút zoom để phóng to/thu nhỏ\n")
         self.map_info_text.insert(tk.END, "• Click vào marker để xem thông tin thành phố\n")
-        self.map_info_text.insert(tk.END, "• Đường màu đỏ hiển thị lộ trình tối ưu\n")
+        self.map_info_text.insert(tk.END, "• Đường màu đỏ hiển thị lộ trình tối ưu nhất\n")
         self.map_info_text.insert(tk.END, "• Số trên marker hiển thị thứ tự đi qua\n")
 
     def calculate_distance(self, coord1, coord2):
