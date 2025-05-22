@@ -642,6 +642,7 @@ class TSPGUI(tk.Tk):
                 self.map_info_text.insert(tk.END, f"{i+1:2d}. {from_city:<15} → {to_city:<15} \n\n")
         
         
+        # Tổng khoảng cách: {result['distance']:.2f} km\n")
         # Hướng dẫn sử dụng bản đồ
         self.map_info_text.insert(tk.END, "🗺️ CÁCH SỬ DỤNG BẢN ĐỒ:\n")
         self.map_info_text.insert(tk.END, "-"*25 + "\n")
