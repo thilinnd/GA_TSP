@@ -330,3 +330,91 @@ def solve_gasa(problem,
     best_route = population[best_idx] + [population[best_idx][0]]
 
     return final_fitness[best_idx], [city + 1 for city in best_route], fitness_history
+
+#--------------------------------------------- TSPTW ------------------------------------
+# --- Hàm tính fitness có ràng buộc thời gian ---
+def compute_route_distance_with_time_window(route, distances, time_windows, speed=50):
+    total_distance = 0
+    total_time = 0
+    penalty = 0
+    for i in range(len(route) - 1):
+        frm = route[i]
+        to = route[i + 1]
+        dist = distances[frm][to]
+        travel_time = dist / speed
+        total_distance += dist
+        total_time += travel_time
+
+        start_window, end_window = time_windows[to]
+        if total_time < start_window:
+            total_time = start_window
+        elif total_time > end_window:
+            penalty += 1000 * (total_time - end_window)
+
+    dist_back = distances[route[-1]][route[0]]
+    total_distance += dist_back
+
+    return total_distance + penalty
+
+def fitness_with_time_window(population, distance_matrix, time_windows, speed=50):
+    return [compute_route_distance_with_time_window(route + [route[0]], distance_matrix, time_windows, speed) for route in population]
+
+# --- Thuật toán GA mới, gọi fitness có ràng buộc ---
+def genetic_algorithm_with_constraints(n_cities, distances, population_size=100, generations=100,
+                                       mutation_rate=0.01, mutation_algorithm='swap',
+                                       selection_algorithm='elitism', crossover_algorithm='order',
+                                       time_windows=None, speed=50):
+    population = [generate_random_route(n_cities) for _ in range(population_size)]
+    fitness_history = []
+
+    for _ in range(generations):
+        fitness_scores = fitness_with_time_window(population, distances, time_windows, speed)
+        fitness_history.append(min(fitness_scores))
+
+        selected = selection(population, fitness_scores, selection_algorithm)
+        offspring = []
+
+        while len(offspring) < population_size:
+            p1, p2 = random.sample(selected, 2)
+            c1, c2 = crossover(p1, p2, crossover_algorithm)
+            offspring.append(mutate(c1, mutation_rate, mutation_algorithm))
+            offspring.append(mutate(c2, mutation_rate, mutation_algorithm))
+
+        population = offspring[:population_size]
+
+    final_fitness = fitness_with_time_window(population, distances, time_windows, speed)
+    best_idx = np.argmin(final_fitness)
+    best_route = population[best_idx] + [population[best_idx][0]]
+
+    return {
+        'route': [city + 1 for city in best_route],
+        'distance': final_fitness[best_idx],
+        'fitness': fitness_history
+    }
+
+# --- Hàm solve mới ---
+def solve_with_constraints(problem,
+                          population_size=100,
+                          generations=100,
+                          mutation_rate=0.01,
+                          mutation_algorithm='swap',
+                          crossover_algorithm='single_point',
+                          selection_algorithm='tournament',
+                          time_windows=None,
+                          speed=50):
+    n_cities = len(problem)
+    result = genetic_algorithm_with_constraints(
+        n_cities=n_cities,
+        distances=problem,
+        population_size=population_size,
+        generations=generations,
+        mutation_rate=mutation_rate,
+        mutation_algorithm=mutation_algorithm,
+        selection_algorithm=selection_algorithm,
+        crossover_algorithm=crossover_algorithm,
+        time_windows=time_windows,
+        speed=speed
+    )
+    return result['distance'], result['route'], result['fitness']
+
+
