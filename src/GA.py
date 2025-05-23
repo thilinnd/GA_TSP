@@ -170,7 +170,12 @@ def fitness(population, distance_matrix):
 
 def genetic_algorithm(n_cities, distances, population_size=100, generations=100,
                       mutation_rate=0.01, mutation_algorithm='swap',
-                      selection_algorithm='elitism', crossover_algorithm='order'):
+                      selection_algorithm='elitism', crossover_algorithm='order',
+                      seed=None):
+    if seed is None:
+        seed = 9
+    random.seed(seed)
+    np.random.seed(seed)
 
     population = [generate_random_route(n_cities) for _ in range(population_size)]
     fitness_history = []
