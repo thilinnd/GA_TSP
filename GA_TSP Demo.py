@@ -625,7 +625,7 @@ class TSPGUI(tk.Tk):
         
         # Chi tiết từng đoạn đường
         self.map_info_text.insert(tk.END, "📍 CHI TIẾT LỘ TRÌNH TỐI ƯU:\n")
-        self.map_info_text.insert(tk.END, "-"*35 + "\n")
+        self.map_info_text.insert(tk.END, "-"*40 + "\n")
         
         for i in range(len(self.current_route)-1):
             from_city = self.current_route[i]
@@ -639,9 +639,8 @@ class TSPGUI(tk.Tk):
                 distance = self.calculate_distance(from_coord, to_coord)
                 total_distance += distance
                 
-                self.map_info_text.insert(tk.END, f"{i+1:2d}. {from_city:<15} → {to_city:<15} ({distance:.1f} km)\n")
+                self.map_info_text.insert(tk.END, f"{i+1:2d}. {from_city:<15} → {to_city:<15} \n\n")
         
-        self.map_info_text.insert(tk.END, f"\n📏 Tổng khoảng cách tính toán: {total_distance:.2f} km\n\n")
         
         # Hướng dẫn sử dụng bản đồ
         self.map_info_text.insert(tk.END, "🗺️ CÁCH SỬ DỤNG BẢN ĐỒ:\n")
