@@ -2,7 +2,7 @@
 
 **I. Giới thiệu tổng quan**
 
-Đồ án cuối kỳ môn Trí tuệ nhân tạo - 25D1INF50904201 với tên đề tài: "ỨNG DỤNG GIẢI THUẬT DI TRUYỀN TRONG VIỆC GIẢI QUYẾT BÀI TOÁN NGƯỜI DU LỊCH (TRAVELLING SALESMAN PROBLEM): PHÂN TÍCH HIỆU QUẢ VÀ TRỰC QUAN HÓA KẾT QUẢ
+Đồ án cuối kỳ môn Trí tuệ nhân tạo - 25D1INF50904201 với tên đề tài: "ỨNG DỤNG GIẢI THUẬT DI TRUYỀN TRONG VIỆC GIẢI QUYẾT BÀI TOÁN NGƯỜI DU LỊCH (TRAVELLING SALESMAN PROBLEM): PHÂN TÍCH HIỆU QUẢ VÀ TRỰC QUAN HÓA KẾT QUẢ"
 
 **II. Cách cài đặt Github**
 
@@ -25,10 +25,10 @@
 
 | **Tên** | **MSSV** |**Github**
 ----------|----------|----------
-Nguyễn Vũ Thanh Giang | 31231026898 | [Thanh Giang] (https://github.com/thanhgiang0607)
-Vương Thùy Linh | 31221026306
-Lê Thủy Tiên | 31231020076
-Huỳnh Minh Thư | 31231020999
+Nguyễn Vũ Thanh Giang | 31231026898 | [Thanh Giang](https://github.com/thanhgiang0607)
+Vương Thùy Linh | 31221026306 | [Thùy Linh](https://github.com/thilinnd)
+Lê Thủy Tiên | 31231020076 | [Thủy Tiên](https://github.com/ThuyTien1209)
+Huỳnh Minh Thư | 31231020999 | [Minh Thư](https://github.com/HuynhThu04)
 
 **IV. Lời cảm ơn**
 
