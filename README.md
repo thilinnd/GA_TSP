@@ -32,10 +32,9 @@ Huỳnh Minh Thư | 31231020999 | [Minh Thư](https://github.com/HuynhThu04)
 
 **IV. Lời cảm ơn**
 
-Chúng em xin chân thành gửi lời cảm ơn đến Thầy Đặng Ngọc Hoàng Thành, người đã luôn theo sát, hướng dẫn tận tình và định hướng chuyên môn quý báu cho nhóm trong suốt quá trình thực hiện đề tài. Những đóng góp, ý kiến của Thầy không chỉ giúp chúng em hoàn thiện bài làm mà còn tạo cơ hội đểchúng em được học hỏi, mở rộng kiến thức về nhiều lĩnh vực.
-Bên cạnh đó, xin cảm ơn các thành viên trong nhóm đã không ngừng nỗ lực, cùng nhau hỗ trợ và động viên nhau trong suốt quá trình thực hiện đề tài.
+Chúng em xin chân thành gửi lời cảm ơn đến Thầy Đặng Ngọc Hoàng Thành, người đã luôn theo sát, hướng dẫn tận tình và định hướng chuyên môn quý báu cho nhóm trong suốt quá trình thực hiện đề tài. Những đóng góp, ý kiến của Thầy không chỉ giúp chúng em hoàn thiện bài làm mà còn tạo cơ hội để chúng em được học hỏi, mở rộng kiến thức về nhiều lĩnh vực. Bên cạnh đó, xin cảm ơn các thành viên trong nhóm đã không ngừng nỗ lực, cùng nhau hỗ trợ và động viên nhau trong suốt quá trình thực hiện đề tài.
+
 Mặc dù đã nỗ lực hết mình, nhưng do hạn chế về thời gian cũng như kinh nghiệm chuyên môn, dự án của chúng em vẫn không tránh khỏi những thiếu sót không mong muốn. Chúng em mong nhận được sự thông cảm và góp ý từ Thầy để nhóm có thể rút kinh nghiệm và hoàn thiện hơn cho những bài nghiên cứu trong tương lai.
 
-**V. Tài liệu tham khảo**
 
   
