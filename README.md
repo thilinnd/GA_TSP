@@ -19,7 +19,7 @@
   ```
 * Bước 5:
   * Trong thư mục ```src``` có chứa các file thuật toán: GA.py, TSP.py
-  * File ```GA_TSP Demo.py``` là phần demo, trực quan hóa kết quả thuật toán của nhóm
+  * File ```vietnam_tsp_travel.py``` là phần demo, trực quan hóa kết quả thuật toán của nhóm
 
 **III. Danh sách thành viên**
 
