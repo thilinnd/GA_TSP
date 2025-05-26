@@ -200,7 +200,7 @@ def genetic_algorithm(n_cities, distances, population_size=100, generations=100,
     best_route = population[best_idx] + [population[best_idx][0]]
 
     return {
-        'route': [city + 1 for city in best_route],
+        'route': [city for city in best_route],
         'distance': final_fitness[best_idx],
         'fitness': fitness_history
     }
