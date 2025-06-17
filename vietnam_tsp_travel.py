@@ -1,685 +1,377 @@
-import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
-import csv
+import sys
 import os
-import threading
-import webbrowser
+import csv
 import tempfile
 import folium
-from folium import plugins
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QFileDialog, QComboBox, QListWidget, QListWidgetItem,
+    QLineEdit, QTextEdit, QMessageBox, QProgressBar
+)
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QUrl 
 import src.GA
 import src.TSP
+vn_to_en_provinces = {
+    "An Giang": "An Giang",
+    "Bà Rịa-Vũng Tàu": "Ba Ria - Vung Tau",
+    "Bắc Giang": "Bac Giang",
+    "Bắc Kạn": "Bac Kan",
+    "Bạc Liêu": "Bac Lieu",
+    "Bắc Ninh": "Bac Ninh",
+    "Bến Tre": "Ben Tre",
+    "Bình Dương": "Binh Duong",
+    "Bình Định": "Binh Dinh",
+    "Bình Phước": "Binh Phuoc",
+    "Bình Thuận": "Binh Thuan",
+    "Cà Mau": "Ca Mau",
+    "Cao Bằng": "Cao Bang",
+    "Thành phố Cần Thơ": "Can Tho City",
+    "Cần Thơ": "Can Tho City",
+    "Đà Nẵng": "Da Nang City",
+    "Đắk Lắk": "Dak Lak",
+    "Đắk Nông": "Dak Nong",
+    "Điện Biên": "Dien Bien",
+    "Đồng Nai": "Dong Nai",
+    "Đồng Tháp": "Dong Thap",
+    "Gia Lai": "Gia Lai",
+    "Hà Giang": "Ha Giang",
+    "Hà Nam": "Ha Nam",
+    "Hà Nội": "Hanoi",
+    "Hà Tĩnh": "Ha Tinh",
+    "Hải Dương": "Hai Duong",
+    "Hải Phòng": "Hai Phong",
+    "Hậu Giang": "Hau Giang",
+    "Hòa Bình": "Hoa Binh",
+    "Hồ Chí Minh": "Ho Chi Minh City",
+    "TP. Hồ Chí Minh": "Ho Chi Minh City",
+    "Hưng Yên": "Hung Yen",
+    "Khánh Hòa": "Khanh Hoa",
+    "Kiên Giang": "Kien Giang",
+    "Kon Tum": "Kon Tum",
+    "Lai Châu": "Lai Chau",
+    "Lâm Đồng": "Lam Dong",
+    "Lạng Sơn": "Lang Son",
+    "Lào Cai": "Lao Cai",
+    "Long An": "Long An",
+    "Nam Định": "Nam Dinh",
+    "Nghệ An": "Nghe An",
+    "Ninh Bình": "Ninh Binh",
+    "Ninh Thuận": "Ninh Thuan",
+    "Phú Thọ": "Phu Tho",
+    "Phú Yên": "Phu Yen",
+    "Quảng Bình": "Quang Binh",
+    "Quảng Nam": "Quang Nam",
+    "Quảng Ngãi": "Quang Ngai",
+    "Quảng Ninh": "Quang Ninh",
+    "Quảng Trị": "Quang Tri",
+    "Sóc Trăng": "Soc Trang",
+    "Sơn La": "Son La",
+    "Tây Ninh": "Tay Ninh",
+    "Thái Bình": "Thai Binh",
+    "Thái Nguyên": "Thai Nguyen",
+    "Thanh Hóa": "Thanh Hoa",
+    "Thừa Thiên - Huế": "Thua Thien Hue",
+    "Thừa Thiên Huế": "Thua Thien Hue",
+    "Tiền Giang": "Tien Giang",
+    "TP Hồ Chí Minh": "Ho Chi Minh City",
+    "Trà Vinh": "Tra Vinh",
+    "Tuyên Quang": "Tuyen Quang",
+    "Vĩnh Long": "Vinh Long",
+    "Vĩnh Phúc": "Vinh Phuc",
+    "Vũng Tàu": "Vung Tau",
+    "Yên Bái": "Yen Bai"
+}
 
-class TSPGUI(tk.Tk):
+
+class TSPPyQtApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title("TSP Genetic Algorithm với Bản đồ Vệ tinh")
-        self.geometry("1200x800")
-        self.configure(bg="#ffffff")
+        self.setWindowTitle("TSP Genetic Algorithm with Embedded Map (PyQt5)")
+        self.setGeometry(100, 100, 1400, 800)
 
-        self.city_data = {}  # name -> (lat, lon)
-        self.city_vars = {}  # city name -> tk.BooleanVar()
-        self.current_route = []  # Lưu trữ lộ trình hiện tại
-        self.current_coords = []  # Lưu trữ tọa độ của lộ trình
-        
-        # Thêm biến để lưu lộ trình tốt nhất
-        self.best_route = []  # Lưu lộ trình tốt nhất
-        self.best_distance = float('inf')  # Lưu khoảng cách tốt nhất
+        self.city_data = {}
+        self.current_route = []
+        self.current_coords = []
 
-        self.setup_ui()
-        self.refresh_file_list()
+        self.init_ui()
 
-    def setup_ui(self):
-        # Tạo main container với 2 panel
-        main_container = ttk.PanedWindow(self, orient=tk.HORIZONTAL)
-        main_container.pack(fill="both", expand=True, padx=5, pady=5)
+    def init_ui(self):
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QHBoxLayout(main_widget)
 
-        # Panel trái: Controls
-        left_panel = ttk.Frame(main_container)
-        main_container.add(left_panel, weight=1)
+        # Left panel
+        control_panel = QVBoxLayout()
 
-        # Panel phải: Bản đồ
-        right_panel = ttk.Frame(main_container)
-        main_container.add(right_panel, weight=1)
+        # Load CSV
+        self.csv_file_cb = QComboBox()
+        self.csv_file_cb.addItem("Select CSV file")
+        import os
+        csv_dir = "./data"
+        if os.path.exists(csv_dir):
+            for fname in os.listdir(csv_dir):
+                if fname.endswith('.csv'):
+                    full_path = os.path.join(csv_dir, fname)
+                    self.csv_file_cb.addItem(fname,full_path)
+        self.csv_file_cb.currentIndexChanged.connect(self.load_csv_from_dropdown)
+        control_panel.addWidget(QLabel("Select CSV File"))
+        control_panel.addWidget(self.csv_file_cb)
 
-        # ======= Panel trái: Các điều khiển =======
-        self.setup_left_panel(left_panel)
 
-        # ======= Panel phải: Bản đồ =======
-        self.setup_right_panel(right_panel)
+        # Start city
+        self.start_city_cb = QComboBox()
+        self.start_city_cb.currentIndexChanged.connect(self.sync_start_city_selection)
+        control_panel.addWidget(QLabel("Start City"))
+        control_panel.addWidget(self.start_city_cb)
+        self.start_city_cb.currentIndexChanged.connect(self.sync_start_city_selection)
 
-    def setup_left_panel(self, parent):
-        # ======= Phần trên cùng: Dữ liệu và chọn thành phố =======
-        top_frame = ttk.Frame(parent)
-        top_frame.pack(fill="x", padx=5, pady=5)
 
-        # Khung chọn file và thành phố bắt đầu
-        data_frame = ttk.LabelFrame(top_frame, text="Dữ liệu")
-        data_frame.pack(fill="x", padx=5, pady=5)
+        # City checklist
+        control_panel.addWidget(QLabel("Select Cities"))
+        self.city_list = QListWidget()
+        control_panel.addWidget(self.city_list)
 
-        ttk.Label(data_frame, text="Chọn file CSV:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.file_cb = ttk.Combobox(data_frame, state="readonly", width=25)
-        self.file_cb.grid(row=0, column=1, padx=5, pady=5)
-        self.file_cb.bind("<<ComboboxSelected>>", self.load_selected_file)
+        #Toggle city check state
+        self.city_list.itemClicked.connect(self.toggle_city_checkstate)
 
-        ttk.Label(data_frame, text="Thành phố bắt đầu:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
-        self.start_city_cb = ttk.Combobox(data_frame, state="readonly", width=25)
-        self.start_city_cb.grid(row=1, column=1, padx=5, pady=5)
-        self.start_city_cb.bind("<<ComboboxSelected>>", self.update_start_city)
 
-        # Khung chọn thành phố qua (checkbox)
-        city_frame = ttk.LabelFrame(top_frame, text="Chọn thành phố muốn đi qua")
-        city_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        #Select all, deselect all buttons
+        btn_layout = QHBoxLayout()
+        self.select_all_btn = QPushButton("Select All")
+        self.select_all_btn.clicked.connect(self.select_all_cities)
+        btn_layout.addWidget(self.select_all_btn)
+        self.deselect_all_btn = QPushButton("Deselect All")
+        self.deselect_all_btn.clicked.connect(self.deselect_all_cities)
+        btn_layout.addWidget(self.deselect_all_btn)
+        control_panel.addLayout(btn_layout)
+         #Alogorithm selection
+        self.mut_algo_cb = QComboBox()
+        self.mut_algo_cb.addItems(['swap', 'scramble', 'inversion', 'insertion'])
+        self.cross_algo_cb = QComboBox()
+        self.cross_algo_cb.addItems(['order', 'single_point', 'two_point', 'uniform'])
+        self.sel_algo_cb = QComboBox()
+        self.sel_algo_cb.addItems(['elitism', 'tournament', 'rank', 'roulette_wheel'])
 
-        self.city_canvas = tk.Canvas(city_frame, height=150)
-        self.city_canvas.pack(side="left", fill="both", expand=True)
 
-        scrollbar = ttk.Scrollbar(city_frame, orient="vertical", command=self.city_canvas.yview)
-        scrollbar.pack(side="right", fill="y")
+        # GA config
+        control_panel.addWidget(QLabel("Generations"))
+        self.gen_input = QLineEdit("100")
+        control_panel.addWidget(self.gen_input)
 
-        self.city_canvas.configure(yscrollcommand=scrollbar.set)
-        self.city_canvas.bind('<Configure>', lambda e: self.city_canvas.configure(scrollregion=self.city_canvas.bbox("all")))
+        control_panel.addWidget(QLabel("Population Size"))
+        self.pop_input = QLineEdit("100")
+        control_panel.addWidget(self.pop_input)
 
-        self.city_inner_frame = ttk.Frame(self.city_canvas)
-        self.city_canvas.create_window((0,0), window=self.city_inner_frame, anchor="nw")
+        control_panel.addWidget(QLabel("Mutation Rate"))
+        self.mut_input = QLineEdit("0.01")
+        control_panel.addWidget(self.mut_input)
+        control_panel.addWidget(QLabel("Mutation Algorithm"))
+        control_panel.addWidget(self.mut_algo_cb)
+        control_panel.addWidget(QLabel("Crossover Algorithm"))
+        control_panel.addWidget(self.cross_algo_cb)
+        control_panel.addWidget(QLabel("Selection Algorithm"))
+        control_panel.addWidget(self.sel_algo_cb)
 
-        # Nút chọn tất cả / bỏ chọn tất cả
-        btn_frame = ttk.Frame(city_frame)
-        btn_frame.pack(fill="x", pady=5)
-        self.btn_select_all = ttk.Button(btn_frame, text="Chọn tất cả", command=self.select_all_cities)
-        self.btn_select_all.pack(side="left", padx=5)
-        self.btn_deselect_all = ttk.Button(btn_frame, text="Bỏ chọn tất cả", command=self.deselect_all_cities)
-        self.btn_deselect_all.pack(side="left", padx=5)
 
-        # ======= Phần giữa: cấu hình thuật toán =======
-        middle_frame = ttk.LabelFrame(parent, text="Cấu hình thuật toán di truyền")
-        middle_frame.pack(fill="x", padx=5, pady=5)
-
-        ttk.Label(middle_frame, text="Thuật toán đột biến:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.mut_algo_cb = ttk.Combobox(middle_frame, values=['swap', 'scramble', 'inversion', 'insertion'], state='readonly', width=15)
-        self.mut_algo_cb.current(0)
-        self.mut_algo_cb.grid(row=0, column=1, padx=5, pady=5)
-
-        ttk.Label(middle_frame, text="Thuật toán lai ghép:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        self.cross_algo_cb = ttk.Combobox(middle_frame, values=['order', 'single_point', 'two_point', 'uniform'], state='readonly', width=15)
-        self.cross_algo_cb.current(0)
-        self.cross_algo_cb.grid(row=1, column=1, padx=5, pady=5)
-
-        ttk.Label(middle_frame, text="Thuật toán chọn lọc:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.sel_algo_cb = ttk.Combobox(middle_frame, values=['elitism', 'tournament', 'rank', 'roulette_wheel'], state='readonly', width=15)
-        self.sel_algo_cb.current(0)
-        self.sel_algo_cb.grid(row=2, column=1, padx=5, pady=5)
-
-        ttk.Label(middle_frame, text="Số thế hệ:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
-        self.gen_entry = ttk.Entry(middle_frame, width=17)
-        self.gen_entry.insert(0, "100")
-        self.gen_entry.grid(row=3, column=1, padx=5, pady=5)
-
-        ttk.Label(middle_frame, text="Kích thước quần thể:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
-        self.pop_entry = ttk.Entry(middle_frame, width=17)
-        self.pop_entry.insert(0, "100")
-        self.pop_entry.grid(row=4, column=1, padx=5, pady=5)
-
-        ttk.Label(middle_frame, text="Tỉ lệ đột biến:").grid(row=5, column=0, padx=5, pady=5, sticky="w")
-        self.mut_entry = ttk.Entry(middle_frame, width=17)
-        self.mut_entry.insert(0, "0.01")
-        self.mut_entry.grid(row=5, column=1, padx=5, pady=5)
-
-        # Nút chạy thuật toán
-        self.btn_process = ttk.Button(parent, text="▶ Chạy thuật toán", command=self.start_process)
-        self.btn_process.pack(pady=10, ipadx=10, ipady=5)
+        # Algorithm button
+        self.run_button = QPushButton("Run Algorithm")
+        self.run_button.clicked.connect(self.run_algorithm)
+        control_panel.addWidget(self.run_button)
 
         # Progress bar
-        self.progress_var = tk.DoubleVar()
-        self.progressbar = ttk.Progressbar(parent, variable=self.progress_var, maximum=100)
-        self.progressbar.pack(fill="x", padx=10, pady=5)
+        self.progress = QProgressBar()
+        control_panel.addWidget(self.progress)
 
-        # ======= Phần dưới: kết quả =======
-        result_frame = ttk.LabelFrame(parent, text="Kết quả")
-        result_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        # Result text
+        self.result_text = QTextEdit()
+        self.result_text.setReadOnly(True)
+        control_panel.addWidget(self.result_text)
 
-        self.result_text = scrolledtext.ScrolledText(result_frame, wrap=tk.WORD, font=("Consolas", 10), height=8)
-        self.result_text.pack(fill="both", expand=True)
+        # Add left panel
+        main_layout.addLayout(control_panel, 4)
 
-        # Status bar
-        self.status_var = tk.StringVar(value="Sẵn sàng")
-        self.status_label = ttk.Label(parent, textvariable=self.status_var, relief="sunken", anchor="w")
-        self.status_label.pack(fill="x", side="bottom")
+        # Map view
+        self.map_view = QWebEngineView()
+        main_layout.addWidget(self.map_view, 6)
+    def toggle_city_checkstate(self, item):
+        if not (item.flags() & Qt.ItemIsEnabled):
+           return
 
-    def setup_right_panel(self, parent):
-        # Khung bản đồ
-        map_frame = ttk.LabelFrame(parent, text="Bản đồ Vệ tinh - Lộ trình TSP")
-        map_frame.pack(fill="both", expand=True, padx=5, pady=5)
-
-        # Nút điều khiển bản đồ
-        map_control_frame = ttk.Frame(map_frame)
-        map_control_frame.pack(fill="x", padx=5, pady=5)
-
-        self.btn_show_map = ttk.Button(map_control_frame, text="🗺️ Hiển thị bản đồ", command=self.show_map)
-        self.btn_show_map.pack(side="left", padx=5)
-
-        self.btn_show_cities = ttk.Button(map_control_frame, text="📍 Hiển thị thành phố", command=self.show_cities_only)
-        self.btn_show_cities.pack(side="left", padx=5)
-
-        # Khung hiển thị thông tin bản đồ
-        self.map_info_text = scrolledtext.ScrolledText(map_frame, wrap=tk.WORD, font=("Consolas", 9), height=25)
-        self.map_info_text.pack(fill="both", expand=True, padx=5, pady=5)
-
-        # Thêm thông tin hướng dẫn ban đầu
-        self.map_info_text.insert(tk.END, "🗺️ HƯỚNG DẪN SỬ DỤNG BẢN ĐỒ\n")
-        self.map_info_text.insert(tk.END, "="*50 + "\n\n")
-        self.map_info_text.insert(tk.END, "1. Chọn file CSV chứa dữ liệu thành phố\n")
-        self.map_info_text.insert(tk.END, "2. Chọn thành phố xuất phát\n")
-        self.map_info_text.insert(tk.END, "3. Chọn các thành phố muốn đi qua\n")
-        self.map_info_text.insert(tk.END, "4. Nhấn 'Hiển thị thành phố' để xem vị trí các thành phố\n")
-        self.map_info_text.insert(tk.END, "5. Chạy thuật toán để tìm lộ trình tối ưu\n")
-        self.map_info_text.insert(tk.END, "6. Nhấn 'Hiển thị bản đồ' để xem lộ trình trên bản đồ vệ tinh\n\n")
-        self.map_info_text.insert(tk.END, "📍 Bản đồ sẽ mở trong trình duyệt web của bạn\n")
-        self.map_info_text.insert(tk.END, "🛰️ Sử dụng ảnh vệ tinh chất lượng cao\n")
-
-    def refresh_file_list(self):
-        data_folder = "./data"
-        if not os.path.exists(data_folder):
-            os.makedirs(data_folder)
-
-        csv_files = [f for f in os.listdir(data_folder) if f.endswith(".csv")]
-        self.file_cb['values'] = csv_files
-        if csv_files:
-            self.file_cb.current(0)
-            self.load_selected_file()
-
-    def load_selected_file(self, event=None):
-        selected_file = self.file_cb.get()
-        if not selected_file:
-            return
-
-        path = os.path.join("./data", selected_file)
-        try:
-            with open(path, newline='', encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                self.city_data = {}
-                for row in reader:
-                    if 'province' in row and 'lat' in row and 'lon' in row:
-                        try:
-                            lat = float(row['lat'])
-                            lon = float(row['lon'])
-                            self.city_data[row['province']] = (lat, lon)
-                        except:
-                            continue
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Không đọc được file: {e}")
-            return
-
-        cities = list(self.city_data.keys())
-        self.start_city_cb['values'] = cities
-        if cities:
-            self.start_city_cb.current(0)
-
-        # Xóa checkbox cũ
-        for widget in self.city_inner_frame.winfo_children():
-            widget.destroy()
-        self.city_vars.clear()
-
-        # Tạo checkbox cho từng thành phố
-        for city in cities:
-            var = tk.BooleanVar(value=False)
-            chk = ttk.Checkbutton(self.city_inner_frame, text=city, variable=var)
-            chk.pack(anchor="w", padx=5, pady=2)
-            self.city_vars[city] = var
-            
-        # Cập nhật scroll region
-        self.city_inner_frame.update_idletasks()
-        self.city_canvas.configure(scrollregion=self.city_canvas.bbox("all"))
-            
-        # Tự động chọn thành phố xuất phát
-        self.update_start_city()
-
-        # Cập nhật thông tin bản đồ
-        self.update_map_info()
-
-    def update_start_city(self, event=None):
-        """Cập nhật trạng thái checkbox khi chọn thành phố xuất phát"""
-        start_city = self.start_city_cb.get()
-        if start_city and start_city in self.city_vars:
-            # Tự động chọn thành phố xuất phát và vô hiệu hóa checkbox của nó
-            self.city_vars[start_city].set(True)
-            
-            # Tìm và vô hiệu hóa checkbox của thành phố xuất phát
-            for widget in self.city_inner_frame.winfo_children():
-                if isinstance(widget, ttk.Checkbutton) and widget.cget("text") == start_city:
-                    widget.config(state="disabled")
-                else:
-                    widget.config(state="normal")
+        if item.checkState() == Qt.Checked:
+           item.setCheckState(Qt.Unchecked)
+        else:
+           item.setCheckState(Qt.Checked)
 
     def select_all_cities(self):
-        """Chọn tất cả các thành phố trừ thành phố xuất phát (đã được chọn riêng)"""
-        for city, var in self.city_vars.items():
-            var.set(True)
-
+        for i in range(self.city_list.count()):
+            item = self.city_list.item(i)
+            if item.flags() & Qt.ItemIsEnabled:
+               item.setCheckState(Qt.Checked)
     def deselect_all_cities(self):
-        """Bỏ chọn tất cả các thành phố trừ thành phố xuất phát"""
-        start_city = self.start_city_cb.get()
-        for city, var in self.city_vars.items():
-            if city != start_city:  # Giữ nguyên thành phố xuất phát đã chọn
-                var.set(False)
+        for i in range(self.city_list.count()):
+            item = self.city_list.item(i)
+            if item.flags() & Qt.ItemIsEnabled:
+                item.setCheckState(Qt.Unchecked)
 
-    def update_map_info(self):
-        """Cập nhật thông tin về dữ liệu đã tải"""
-        self.map_info_text.delete("1.0", tk.END)
-        
-        if not self.city_data:
-            self.map_info_text.insert(tk.END, "Chưa có dữ liệu thành phố.\n")
+    def sync_start_city_selection(self):
+        selected_start = self.start_city_cb.currentText()
+
+        for i in range(self.city_list.count()):
+            item = self.city_list.item(i)
+
+        # Enable tất cả trước
+            item.setFlags(item.flags() | Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Unchecked)
+
+            if item.text() == selected_start:
+               item.setCheckState(Qt.Checked)
+               item.setFlags(item.flags() & ~Qt.ItemIsEnabled) 
+
+
+    def load_csv_from_dropdown(self):
+        path = self.csv_file_cb.currentData()
+        if not path or not path.endswith('.csv'):
             return
-            
-        self.map_info_text.insert(tk.END, f"📊 THÔNG TIN DỮ LIỆU\n")
-        self.map_info_text.insert(tk.END, "="*30 + "\n\n")
-        self.map_info_text.insert(tk.END, f"📁 File: {self.file_cb.get()}\n")
-        self.map_info_text.insert(tk.END, f"🏙️ Số thành phố: {len(self.city_data)}\n\n")
-        
-        self.map_info_text.insert(tk.END, "📍 DANH SÁCH THÀNH PHỐ:\n")
-        self.map_info_text.insert(tk.END, "-"*30 + "\n")
-        
-        for i, (city, (lat, lon)) in enumerate(self.city_data.items(), 1):
-            self.map_info_text.insert(tk.END, f"{i:2d}. {city:<20} ({lat:.4f}, {lon:.4f})\n")
 
-    def create_map(self, show_route=True):
-        """Tạo bản đồ với ảnh vệ tinh"""
-        if not self.city_data:
-            return None
+        self.city_data.clear()
+        self.city_list.clear()
+        self.start_city_cb.clear()
 
-        # Tính toán trung tâm bản đồ
-        lats = [coord[0] for coord in self.city_data.values()]
-        lons = [coord[1] for coord in self.city_data.values()]
-        center_lat = sum(lats) / len(lats)
-        center_lon = sum(lons) / len(lons)
+        try:
+            with open(path, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                cities = []
+                for row in reader:
+                    city = row.get('province') or row.get('city') or row.get('name')
+                    lat = row.get('lat')
+                    lon = row.get('lon')
+                    if city and lat and lon:
+                        self.city_data[city] = (float(lat), float(lon))
+                        cities.append(city)
+            if not cities:
+                QMessageBox.warning(self, "Warning", "No valid cities found in CSV.")
+                return
+            cities_en = [vn_to_en_provinces.get(city, city) for city in cities]
+            self.en_to_vn_city = {
+            en: vn for vn, en in zip(cities, cities_en)
+            }
 
-        # Tạo bản đồ với ảnh vệ tinh
-        m = folium.Map(
-            location=[center_lat, center_lon],
-            zoom_start=6,
-            tiles=None
-        )
-
-        # Thêm nhiều lớp bản đồ
-        folium.TileLayer('OpenStreetMap', name='Bản đồ đường').add_to(m)
-        folium.TileLayer(
-            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            attr='Esri',
-            name='Ảnh vệ tinh',
-            overlay=False,
-            control=True
-        ).add_to(m)
-        
-        # Thêm lớp ảnh vệ tinh với nhãn
-        folium.TileLayer(
-            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-            attr='Esri',
-            name='Ảnh vệ tinh + Nhãn',
-            overlay=True,
-            control=True
-        ).add_to(m)
-
-        selected_cities = [city for city, var in self.city_vars.items() if var.get()] if self.city_vars else list(self.city_data.keys())
-        start_city = self.start_city_cb.get()
-
-        # Thêm marker cho các thành phố
-        for city in selected_cities:
-            if city in self.city_data:
-                lat, lon = self.city_data[city]
-                
-                # Màu sắc khác nhau cho thành phố xuất phát
-                if city == start_city:
-                    icon_color = 'red'
-                    icon_icon = 'home'
-                    popup_text = f"🚩 XUẤT PHÁT: {city}"
+            default_start = cities_en[0]
+            self.start_city_cb.addItems(cities_en)
+            self.start_city_cb.setCurrentText(default_start)
+            for city in cities_en:
+                item = QListWidgetItem(city)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                if city == default_start:
+                    item.setCheckState(Qt.Checked)
+                    item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
                 else:
-                    icon_color = 'blue'
-                    icon_icon = 'info-sign'
-                    popup_text = f"📍 {city}"
-                
-                folium.Marker(
-                    [lat, lon],
-                    popup=folium.Popup(popup_text, max_width=200),
-                    tooltip=city,
-                    icon=folium.Icon(color=icon_color, icon=icon_icon)
-                ).add_to(m)
+                    item.setCheckState(Qt.Unchecked)
+                self.city_list.addItem(item)
 
-        # Vẽ đường đi nếu có lộ trình
-        if show_route and self.current_route and self.current_coords:
-            # Vẽ đường đi chính
-            folium.PolyLine(
-                self.current_coords,
-                color='red',
-                weight=4,
-                opacity=0.8,
-                popup='Lộ trình tối ưu TSP'
-            ).add_to(m)
-            
-            # Thêm marker số thứ tự cho từng điểm trong lộ trình
-            for i, (city, coord) in enumerate(zip(self.current_route, self.current_coords)):
-                if i < len(self.current_route) - 1:  # Không đánh số cho điểm cuối (trùng với điểm đầu)
-                    folium.CircleMarker(
-                        coord,
-                        radius=15,
-                        popup=f"Thứ tự: {i+1}",
-                        color='white',
-                        fill=True,
-                        fillColor='red',
-                        fillOpacity=0.8,
-                        weight=2
-                    ).add_to(m)
-                    
-                    # Thêm số thứ tự
-                    folium.Marker(
-                        coord,
-                        icon=folium.DivIcon(
-                            html=f'<div style="color: white; font-weight: bold; font-size: 12px; text-align: center; line-height: 15px;">{i+1}</div>',
-                            icon_size=(15, 15),
-                            icon_anchor=(7, 7)
-                        )
-                    ).add_to(m)
 
-        # Thêm điều khiển lớp
-        folium.LayerControl().add_to(m)
         
-        # Thêm plugin fullscreen
-        plugins.Fullscreen().add_to(m)
-        
-        # Thêm plugin đo khoảng cách
-        plugins.MeasureControl().add_to(m)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
 
-        return m
-
-    def show_cities_only(self):
-        """Hiển thị chỉ các thành phố đã chọn trên bản đồ"""
-        if not self.city_data:
-            messagebox.showwarning("Cảnh báo", "Vui lòng tải dữ liệu thành phố trước.")
+    def run_algorithm(self):
+        start_city = self.start_city_cb.currentText()
+        if not start_city:
+            QMessageBox.warning(self, "Warning", "Please select a start city.")
             return
+        selected_cities = []
+        for i in range(self.city_list.count()):
+            item = self.city_list.item(i)
+            if item.checkState() == Qt.Checked or not (item.flags() & Qt.ItemIsEnabled):
+                selected_cities.append(item.text())
+        if start_city not in selected_cities:
+            selected_cities.insert(0, start_city)
 
-        selected_cities = [city for city, var in self.city_vars.items() if var.get()]
-        if len(selected_cities) < 2:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn ít nhất 2 thành phố.")
+        if len(selected_cities) < 3:
+            QMessageBox.warning(self, "Warning", "Select at least 3 cities.")
             return
 
         try:
-            # Tạo bản đồ chỉ hiển thị thành phố
-            m = self.create_map(show_route=False)
-            if m is None:
-                return
+            generations = int(self.gen_input.text())
+            population = int(self.pop_input.text())
+            mutation_rate = float(self.mut_input.text())
+        except:
+            QMessageBox.warning(self, "Error", "Invalid input parameters.")
+            return
+        mutation_algo = self.mut_algo_cb.currentText()
+        crossover_algo = self.cross_algo_cb.currentText()
+        selection_algo = self.sel_algo_cb.currentText()
 
-            # Lưu bản đồ tạm thời và mở trong trình duyệt
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.html')
-            m.save(temp_file.name)
-            webbrowser.open('file://' + temp_file.name)
+        coords = [self.city_data[self.en_to_vn_city[city_en]] for city_en in selected_cities]
+        dist_matrix = src.TSP.compute_distance_matrix(coords)
 
-            self.status_var.set(f"Đã hiển thị {len(selected_cities)} thành phố trên bản đồ")
-            
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể tạo bản đồ: {e}")
+        best_result = None
+        nums_run =5
+        for i in range(nums_run):
+            self.progress.setValue(int((i + 1) / nums_run * 100))
+            result = src.GA.genetic_algorithm(
+                n_cities=len(coords),
+                distances=dist_matrix,
+                population_size=population,
+                generations=generations,
+                mutation_rate=mutation_rate,
+                mutation_algorithm= mutation_algo,
+                selection_algorithm= selection_algo,
+                crossover_algorithm= crossover_algo,
+            )
+            if not best_result or result["distance"] < best_result["distance"]:
+                best_result = result.copy()
+                
+
+        route = best_result["route"]
+        route_coords = [coords[i] for i in route]
+        route_names = [selected_cities[i] for i in route]
+        if route_names[0].strip().lower() == route_names[-1].strip().lower():
+            route_names = route_names[:-1]
+            route_coords = route_coords[:-1]
+        if start_city in route_names:
+            start_idx = route_names.index(start_city)
+            route_names = route_names[start_idx:] + route_names[:start_idx]
+            route_coords = route_coords[start_idx:] + route_coords[:start_idx]
+        route_names.append(route_names[0])
+        route_coords.append(route_coords[0])
+        route_names_en = [vn_to_en_provinces.get(name, name) for name in route_names]
+        print("Final route names (after rotate + fix):", route_names_en)
+
+        self.result_text.clear()
+        self.result_text.append("<b>Optimal TSP Route:</b>")
+        self.result_text.append(" → ".join(route_names_en))
+        self.result_text.append(f"<b>Distance:</b> {best_result['distance']:.2f} km")
+
+        self.current_route = route_names_en
+        self.current_coords = route_coords
+        self.show_map()
 
     def show_map(self):
-        """Hiển thị bản đồ với lộ trình (nếu có)"""
-        if not self.current_route:
-            self.show_cities_only()
+        if not self.current_coords:
             return
 
-        try:
-            # Tạo bản đồ với lộ trình
-            m = self.create_map(show_route=True)
-            if m is None:
-                return
-
-            # Lưu bản đồ tạm thời và mở trong trình duyệt
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.html')
-            m.save(temp_file.name)
-            webbrowser.open('file://' + temp_file.name)
-
-            self.status_var.set("Đã hiển thị lộ trình TSP trên bản đồ vệ tinh")
+        m = folium.Map(location=self.current_coords[0], zoom_start=6)
+        for i, (city, coord) in enumerate(zip(self.current_route, self.current_coords)):
             
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể tạo bản đồ: {e}")
-
-    def start_process(self):
-        # Khóa nút chạy trong lúc chạy
-        self.btn_process.config(state="disabled")
-        self.status_var.set("Đang chạy thuật toán...")
-        self.progress_var.set(0)
-        self.result_text.delete("1.0", tk.END)
-        
-        # Reset lộ trình tốt nhất
-        self.best_route = []
-        self.best_distance = float('inf')
-
-        # Chạy thuật toán trên luồng riêng để không làm đơ giao diện
-        threading.Thread(target=self.process).start()
-
-    def process(self):
-        start_city = self.start_city_cb.get()
-        selected_cities = [city for city, var in self.city_vars.items() if var.get()]
-
-        if not start_city:
-            messagebox.showerror("Lỗi", "Vui lòng chọn thành phố bắt đầu.")
-            self.status_var.set("Lỗi: chưa chọn thành phố bắt đầu")
-            self.btn_process.config(state="normal")
-            return
-            
-        if len(selected_cities) < 3:
-            messagebox.showerror("Lỗi", "Vui lòng chọn ít nhất 3 thành phố (bao gồm thành phố xuất phát).")
-            self.status_var.set("Lỗi: chưa chọn đủ thành phố")
-            self.btn_process.config(state="normal")
-            return
-        
-        # Sắp xếp các thành phố theo longitude, sau đó là latitude
-        selected_cities.sort(key=lambda city: (self.city_data[city][0], self.city_data[city][1]) if city in self.city_data else (float('inf'), float('inf')))
-
-        # Đảm bảo thành phố xuất phát ở đầu mảng
-        if start_city in selected_cities:
-            selected_cities.remove(start_city)
-        selected_cities.insert(0, start_city)
-
-        try:
-            generations = int(self.gen_entry.get())
-            population = int(self.pop_entry.get())
-            mutation_rate = float(self.mut_entry.get())
-            if generations <= 0 or population <= 0 or not (0 <= mutation_rate <= 1):
-                raise ValueError("Thông số không hợp lệ")
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Thông số không hợp lệ: {e}")
-            self.status_var.set("Lỗi: thông số không hợp lệ")
-            self.btn_process.config(state="normal")
-            return
-
-        valid_cities = []
-        valid_city_names = []
-        for city in selected_cities:
-            if city in self.city_data:
-                valid_cities.append(self.city_data[city])
-                valid_city_names.append(city)
-
-        if len(valid_cities) < 3:
-            messagebox.showerror("Lỗi", "Cần ít nhất 3 thành phố có tọa độ hợp lệ.")
-            self.status_var.set("Lỗi: thiếu tọa độ hợp lệ")
-            self.btn_process.config(state="normal")
-            return
-
-        dist_matrix = src.TSP.compute_distance_matrix(valid_cities)
-
-        try:
-            # Chạy thuật toán nhiều lần để tìm lộ trình tốt nhất
-            num_runs = 5  # Số lần chạy để tìm kết quả tốt nhất
-            best_result = None
-            
-            for run in range(num_runs):
-                # Cập nhật progress bar
-                progress = (run / num_runs) * 100
-                self.progress_var.set(progress)
-                
-                # Chạy thuật toán
-                current_result = src.GA.genetic_algorithm(
-                    n_cities=len(valid_cities),
-                    distances=dist_matrix,
-                    population_size=population,
-                    generations=generations,
-                    mutation_rate=mutation_rate,
-                    mutation_algorithm=self.mut_algo_cb.get(),
-                    selection_algorithm=self.sel_algo_cb.get(),
-                    crossover_algorithm=self.cross_algo_cb.get()
-                )
-                
-                # Kiểm tra kết quả hợp lệ
-                if 'route' not in current_result or 'distance' not in current_result:
-                    continue
-                    
-                # So sánh với kết quả tốt nhất hiện tại
-                if (best_result is None or 
-                    current_result['distance'] < best_result['distance']):
-                    best_result = current_result.copy()
-                    self.best_distance = current_result['distance']
-                    self.best_route = current_result['route'].copy()
-                
-                # Cập nhật status
-                self.status_var.set(f"Đang chạy lần {run+1}/{num_runs}... Tốt nhất: {self.best_distance:.2f} km")
-            
-            # Sử dụng kết quả tốt nhất
-            if best_result is None:
-                raise ValueError("Không có kết quả hợp lệ")
-                
-            result = best_result
-            route = [i % len(valid_city_names) for i in result['route']]
-            final_distance = result['distance']
-
-            route_names_raw = [valid_city_names[i] for i in route]
-
-            # Đưa start_city về đầu tuyến đường
-            start_city_name = valid_city_names[0]
-            if start_city_name in route_names_raw:
-                start_idx = route_names_raw.index(start_city_name)
-                route_names = route_names_raw[start_idx:] + route_names_raw[:start_idx]
+            if i == len(self.current_route) - 1 and city == self.current_route[0]:
+                 icon = folium.Icon(color='red', icon='stop', prefix='fa')
+                 popup_text = f"Starting and ending: {city}"
             else:
-                route_names = route_names_raw
-                
-            # Loại bỏ các thành phố trùng lặp liên tiếp trong lộ trình
-            unique_route = []
-            for city in route_names:
-                if not unique_route or unique_route[-1] != city:
-                    unique_route.append(city)
-            
-            # Đảm bảo tuyến đường kết thúc tại điểm xuất phát
-            if unique_route and unique_route[0] != unique_route[-1]:
-                unique_route.append(unique_route[0])
+                icon = folium.Icon(color='blue', icon='map-marker', prefix='fa')
+                popup_text = f"{i}. {city}"
+            folium.Marker(coord, popup=popup_text, icon=icon).add_to(m)
+        folium.PolyLine(self.current_coords, color="red").add_to(m)
 
-            # Lưu lộ trình và tọa độ để hiển thị trên bản đồ
-            self.current_route = unique_route
-            self.current_coords = []
-            for city in unique_route:
-                if city in self.city_data:
-                    self.current_coords.append(list(self.city_data[city]))
-
-            # Hiển thị kết quả
-            self.result_text.delete("1.0", tk.END)
-            self.result_text.insert(tk.END, "🎯 KẾT QUẢ THUẬT TOÁN DI TRUYỀN TSP\n")
-            self.result_text.insert(tk.END, "="*50 + "\n\n")
-            self.result_text.insert(tk.END, f"⭐ LỘ TRÌNH TỐI ƯU NHẤT (Tốt nhất trong {num_runs} lần chạy):\n")
-            self.result_text.insert(tk.END, f"   {' → '.join(unique_route)}\n\n")
-            self.result_text.insert(tk.END, f"📏 Tổng khoảng cách tối ưu: {final_distance:.2f} km\n")
-            self.result_text.insert(tk.END, f"🏙️ Số thành phố: {len(unique_route)-1}\n")
-            self.result_text.insert(tk.END, f"🔄 Số lần chạy: {num_runs}\n")
-            self.result_text.insert(tk.END, f"🧬 Số thế hệ mỗi lần: {generations}\n")
-            self.result_text.insert(tk.END, f"👥 Kích thước quần thể: {population}\n")
-            self.result_text.insert(tk.END, f"🔄 Tỉ lệ đột biến: {mutation_rate}\n\n")
-            self.result_text.insert(tk.END, "🗺️ Nhấn 'Hiển thị bản đồ' để xem lộ trình tối ưu trên ảnh vệ tinh!\n")
-
-            # Cập nhật thông tin bản đồ
-            self.update_route_info()
-
-            self.status_var.set("Hoàn thành! Đã tìm được lộ trình tối ưu.")
-            self.progress_var.set(100)
-            
-        except Exception as e:
-            import traceback
-            self.result_text.delete("1.0", tk.END)
-            self.result_text.insert(tk.END, f"❌ Lỗi khi chạy thuật toán:\n{traceback.format_exc()}")
-            self.status_var.set("Lỗi khi chạy thuật toán")
-
-        self.btn_process.config(state="normal")
-
-    def update_route_info(self):
-        """Cập nhật thông tin lộ trình trên panel bản đồ"""
-        if not self.current_route:
-            return
-            
-        self.map_info_text.delete("1.0", tk.END)
-        
-        self.map_info_text.insert(tk.END, "🎯 THÔNG TIN LỘ TRÌNH TỐI ƯU NHẤT\n")
-        self.map_info_text.insert(tk.END, "="*40 + "\n\n")
-        
-        # Thông tin tổng quan
-        total_distance = 0
-        self.map_info_text.insert(tk.END, f"🚩 Điểm xuất phát: {self.current_route[0]}\n")
-        self.map_info_text.insert(tk.END, f"🏁 Điểm kết thúc: {self.current_route[-1]}\n")
-        self.map_info_text.insert(tk.END, f"🏙️ Số thành phố: {len(self.current_route)-1}\n")
-        if hasattr(self, 'best_distance') and self.best_distance < float('inf'):
-            self.map_info_text.insert(tk.END, f"📏 Khoảng cách tối ưu: {self.best_distance:.2f} km\n\n")
-        else:
-            self.map_info_text.insert(tk.END, "\n")
-        
-        # Chi tiết từng đoạn đường
-        self.map_info_text.insert(tk.END, "📍 CHI TIẾT LỘ TRÌNH TỐI ƯU:\n")
-        self.map_info_text.insert(tk.END, "-"*40 + "\n")
-        
-        for i in range(len(self.current_route)-1):
-            from_city = self.current_route[i]
-            to_city = self.current_route[i+1]
-            
-            if from_city in self.city_data and to_city in self.city_data:
-                from_coord = self.city_data[from_city]
-                to_coord = self.city_data[to_city]
-                
-                # Tính khoảng cách giữa 2 thành phố (công thức Haversine)
-                distance = self.calculate_distance(from_coord, to_coord)
-                total_distance += distance
-                
-                self.map_info_text.insert(tk.END, f"{i+1:2d}. {from_city:<15} → {to_city:<15} \n\n")
-        
-        
-        # Tổng khoảng cách: {result['distance']:.2f} km\n")
-        # Hướng dẫn sử dụng bản đồ
-        self.map_info_text.insert(tk.END, "🗺️ CÁCH SỬ DỤNG BẢN ĐỒ:\n")
-        self.map_info_text.insert(tk.END, "-"*25 + "\n")
-        self.map_info_text.insert(tk.END, "• Nhấn 'Hiển thị bản đồ' để xem lộ trình tối ưu\n")
-        self.map_info_text.insert(tk.END, "• Bản đồ sẽ mở trong trình duyệt web\n")
-        self.map_info_text.insert(tk.END, "• Có thể chuyển đổi giữa ảnh vệ tinh và bản đồ đường\n")
-        self.map_info_text.insert(tk.END, "• Sử dụng nút zoom để phóng to/thu nhỏ\n")
-        self.map_info_text.insert(tk.END, "• Click vào marker để xem thông tin thành phố\n")
-        self.map_info_text.insert(tk.END, "• Đường màu đỏ hiển thị lộ trình tối ưu nhất\n")
-        self.map_info_text.insert(tk.END, "• Số trên marker hiển thị thứ tự đi qua\n")
-
-    def calculate_distance(self, coord1, coord2):
-        """Tính khoảng cách giữa 2 tọa độ (Haversine formula)"""
-        import math
-        
-        lat1, lon1 = coord1
-        lat2, lon2 = coord2
-        
-        # Chuyển đổi sang radian
-        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-        
-        # Haversine formula
-        dlat = lat2 - lat1
-        dlon = lon2 - lon1
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-        c = 2 * math.asin(math.sqrt(a))
-        
-        # Bán kính Trái Đất (km)
-        r = 6371
-        
-        return c * r
+        import uuid, tempfile, os
+        tmp_path = os.path.join(tempfile.gettempdir(), f"map_{uuid.uuid4().hex}.html")
+        m.save(tmp_path)
+        self.map_view.load(QUrl.fromLocalFile(tmp_path))
 
 if __name__ == "__main__":
-    try:
-        app = TSPGUI()
-        app.mainloop()
-    except ImportError as e:
-        print("Lỗi: Thiếu thư viện cần thiết!")
-        print("Vui lòng cài đặt: pip install folium")
-        print(f"Chi tiết lỗi: {e}")
+    app = QApplication(sys.argv)
+    window = TSPPyQtApp()
+    window.show()
+    sys.exit(app.exec_())
