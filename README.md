@@ -96,3 +96,35 @@ Developed with PyQt5 + folium, the GUI follows:
 *  No optimal ground-truth data for real-world instances
 *  Performance drops for datasets > 50 cities without parallelization
 *  GUI lacks batch mode, export features, and scalability for professional deployment
+
+====
+## X. Detailed Process
+
+The workflow of this project is organized into multiple stages, with the following structure:
+
+**1. Data Preparation**
+* Location: ```data/```
+* Contains both benchmark and real-world datasets (e.g, ```Viet Nam.csv```)
+* Preprocessed using geographical coordinates of Vietnam's provinces
+
+**2. Algorithm Implementation**
+* Location: ```src/```
+* Includes the core Genetic Algorithm logic, selection, crossover, and mutation methods
+* Implements various configurations (e.g., population size, mutation rate)
+* Key file: ```src/_ init.py _``` with main functions for GA execution
+
+**3. Experiments & Evaluation**
+*  Location: ```experiment/```
+*  Contains scripts and results used to test different GA configurations
+*  Tracks fitness value, FIR, AUC, and convergence behavior
+
+**4. Visualization**
+* File: ```best_route.html```
+* Automatically generated HTML map displaying the optimized route using folium
+* Open it in a browser to visualize the solution interactively
+
+**5. GUI**
+* File: ```vietnam_tsp_travel.py```
+* Allows parameter tuning and map-based visualization with minimal code interaction
+
+
