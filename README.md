@@ -1,8 +1,5 @@
 # SOLVING TRAVELING SALESMAN PROBLEM USING GENETIC ALGORITHM
-By Vuong Thuy Linh |
-   Nguyen Vu Thanh Giang |
-   Le Thuy Tien |
-   Huynh Minh Thu
+
 ## I. Introduction
 The Traveling Salesman Problem (TSP) is a classic NP-hard combinatorial optimization problem. It requires finding the shortest possible route that visits a list of cities exactly once and returns to the origin city. TSP has numerous practical applications in logistics, route planning, network optimization, and manufacturing.
 
@@ -127,4 +124,10 @@ The workflow of this project is organized into multiple stages, with the followi
 * File: ```vietnam_tsp_travel.py```
 * Allows parameter tuning and map-based visualization with minimal code interaction
 
+====
+## Authors ##
 
+1. Vuong Thuy Linh
+   * Email: linhvuong.31221026306@st.ueh.edu.vn
+   * Github: 
+   
