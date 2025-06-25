@@ -129,5 +129,14 @@ The workflow of this project is organized into multiple stages, with the followi
 
 1. Vuong Thuy Linh
    * Email: linhvuong.31221026306@st.ueh.edu.vn
-   * Github: 
+   * Github: https://github.com/thilinnd
+2. Nguyen Vu Thanh Giang
+   * Email: giangnguyen.31231026898@st.ueh.edu.vn
+   * Github: https://github.com/thanhgiang0607
+3. Le Thuy Tien
+   * Email: tienle.31231020076@st.ueh.edu.vn
+   * Github: https://github.com/ThuyTien1209
+4. Huynh Minh Thu
+   * Email: thuhuynh.31231020999@st.ueh.edu.vn
+   * Github: https://github.com/HuynhThu04
    
