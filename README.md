@@ -1,40 +1,98 @@
-# [Genetic Algorithm - Travelling Salesman Problem] AI Final Report
+# SOLVING TRAVELING SALESMAN PROBLEM USING GENETIC ALGORITHM
+By Vuong Thuy Linh |
+   Nguyen Vu Thanh Giang |
+   Le Thuy Tien |
+   Huynh Minh Thu
+## I. Introduction
+The Traveling Salesman Problem (TSP) is a classic NP-hard combinatorial optimization problem. It requires finding the shortest possible route that visits a list of cities exactly once and returns to the origin city. TSP has numerous practical applications in logistics, route planning, network optimization, and manufacturing.
 
-**I. Giới thiệu tổng quan**
+Our project implements a Genetic Algorithm (GA) to solve the TSP using real-world data from all 63 provinces and cities in Vietnam. We analyze how different GA operators and parameters affect convergence and solution quality. 
 
-Đồ án cuối kỳ môn Trí tuệ nhân tạo - 25D1INF50904201 với tên đề tài: "ỨNG DỤNG GIẢI THUẬT DI TRUYỀN TRONG VIỆC GIẢI QUYẾT BÀI TOÁN NGƯỜI DU LỊCH (TRAVELLING SALESMAN PROBLEM): PHÂN TÍCH HIỆU QUẢ VÀ TRỰC QUAN HÓA KẾT QUẢ"
+======
+## II. Background and Motivation
+**_Why Genetic Algorithm?_**
 
-**II. Cách cài đặt Github**
+  GA is a metaheuristic inspired by the process of **natural selection**. It is highly effective for solving large, complex, and nonlinear search problems like TSP, where traditional methods may fail.
 
-* Bước 1: Tải Github và tạo tài khoản
-* Bước 2: Copy link mã nguồn https://github.com/thilinnd/GA_TSP.git
-* Bước 3: Mở git bash và clone về máy
-* Bước 4: Tải các thư viện Python cần thiết: Folium, Numpy, Matplotlib, Networkx về máy
-  
-  ```
-  pip install matplotlib
-  pip install numpy
-  pip install networkx
-  pip install folium
-  ```
-* Bước 5:
-  * Trong thư mục ```src``` có chứa các file thuật toán: GA.py, TSP.py
-  * File ```vietnam_tsp_travel.py``` là phần demo, trực quan hóa kết quả thuật toán của nhóm
+**_Practical Challenge_**
 
-**III. Danh sách thành viên**
+Most benchmark datasets (like TSPLIB) use Euclidean between cities. However, these distances do not account for real road networks, travel constraints, or traffic conditions, which creates a gap between theoretical models and practical use cases. Our project addresses this by using real-world coordinates and distances. 
 
-| **Tên** | **MSSV** |**Github**
-----------|----------|----------
-Nguyễn Vũ Thanh Giang | 31231026898 | [Thanh Giang](https://github.com/thanhgiang0607)
-Vương Thùy Linh | 31221026306 | [Thùy Linh](https://github.com/thilinnd)
-Lê Thủy Tiên | 31231020076 | [Thủy Tiên](https://github.com/ThuyTien1209)
-Huỳnh Minh Thư | 31231020999 | [Minh Thư](https://github.com/HuynhThu04)
+======
+## III. Objectives
+* To model the TSP using realistic geographical data by applying city coordinates and Haversine distance calculations.
+* To design and implement a Genetic Algorithm with key operators such as selection, crossover, and mutation.
+* To analyze the effect of GA parameters (e.g, population size, mutation rate, generations) on convergence and solution quality.
+* To compare multiple GA configurations (e.g, population size, mutation rate, generations) through systematic testing of over 60 operator combinations.
+* To design an interactive GUI application to visualize routing solutions and demonstrate real-world applicability.
 
-**IV. Lời cảm ơn**
+======
+## IV. Key Contributions
+* Designed a customizable GA engine with various selection, crossover, and mutation operators.
+* Integrated real GPS coordinates (Vietnam) using the Haversine formula.
+* Conducted in-depth experiments on datasets of different sizes (3-63 cities)
+* Developed a PyQt5-based GUI that visualizes the route and allows users to configure GA settings.
+* Compared traditional GA with Hybrid GA + Simulated Annealing (GASA) and Reinforcement Learning GA (RLGA)
 
-Chúng em xin chân thành gửi lời cảm ơn đến Thầy Đặng Ngọc Hoàng Thành, người đã luôn theo sát, hướng dẫn tận tình và định hướng chuyên môn quý báu cho nhóm trong suốt quá trình thực hiện đề tài. Những đóng góp, ý kiến của Thầy không chỉ giúp chúng em hoàn thiện bài làm mà còn tạo cơ hội để chúng em được học hỏi, mở rộng kiến thức về nhiều lĩnh vực. Bên cạnh đó, xin cảm ơn các thành viên trong nhóm đã không ngừng nỗ lực, cùng nhau hỗ trợ và động viên nhau trong suốt quá trình thực hiện đề tài.
+====
+## V. Literature review
 
-Mặc dù đã nỗ lực hết mình, nhưng do hạn chế về thời gian cũng như kinh nghiệm chuyên môn, dự án của chúng em vẫn không tránh khỏi những thiếu sót không mong muốn. Chúng em mong nhận được sự thông cảm và góp ý từ Thầy để nhóm có thể rút kinh nghiệm và hoàn thiện hơn cho những bài nghiên cứu trong tương lai.
+The literature review covers foundational and advanced research related to the Traveling Salesman Problem (TSP) and the application of Genetic Algorithms (GA). It discusses key GA components including selection, crossover, and mutation strategies, and explores hybrid models such as Genetic Algorithm with Simulated Annealing (GASA) and Reinforcement Learning-based Genetic Algorithm (RLGA).
 
+====
+## VI. Methodology
+**_Data collection_**
 
-  
+* **Real-world data**: GPS coordinates of 63 Vietnamese provinces and cities
+* **Distance calculation**: Haversine formula (great-circle distance between 2 points on a sphere)
+
+**_GA operators tested_**
+
+* **Selection**: Tournament, Rank, Elitism, Roulette Wheel
+* **Crossover**: Single-point, Two-point, Order, Uniform
+* **Mutation**: Swap, Inversion, Scramble, Insertion
+
+**_Parameters_**
+* **Population size**: 100
+* **Generations**: 200
+* **Mutation rate**: 0.01
+* Random seed fixed for reproducibility
+
+====
+## VII. Results summary
+**_Parameter impact_**
+
+* Larger population -> more stable convergence
+* Mutation rate = 0.01 -> best convergence/ solution trade-off
+* High mutation rate (0.1) -> unstable, noisy solutions
+* More generations beyond 500 -> diminishing returns
+
+**_Operators Performance_**
+ * Best performing combination: _Rank Selection - Order Crossover - Swap Mutation_
+ * Worst performing combination: _Roulette Wheel Selection - Uniform Crossover - Swap Mutation_
+
+**_GA vs RLGA vs GASA_**
+
+| **Algorithm** | **Best Fitness** | **Std.Dev.** | **FIR** | **Time(s)** |
+|---|---|---|---|---|
+| GA | 2392.1082 | 569.8687 | 29.6794 | 0.297 |
+| RLGA | 2329.7092 | 551.3707 | 28.6336 | 0.162 |
+| GASA | 2287.8776 | 251.7014 | 25.1403 | 2.916 |
+
+====
+## VIII. GUI Application
+
+Developed with PyQt5 + folium, the GUI follows:
+* Loading CSV files with coordinates
+* Adjusting GA parameters (population, generations, mutation rate)
+* Choosing the starting city and destination list
+* Visualizing the optimized path on an interactive map
+* Displaying route order and total distance
+
+====
+## IX. Limitations
+
+*  Real distances estimated via Haversine, not real road networks (e.g., via Google Maps API)
+*  No optimal ground-truth data for real-world instances
+*  Performance drops for datasets > 50 cities without parallelization
+*  GUI lacks batch mode, export features, and scalability for professional deployment
