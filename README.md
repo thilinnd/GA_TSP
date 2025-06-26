@@ -125,7 +125,7 @@ The workflow of this project is organized into multiple stages, with the followi
 * Allows parameter tuning and map-based visualization with minimal code interaction
 
 ====
-## Authors ##
+## Authors and Supervisor ##
 
 1. Vuong Thuy Linh
    * Email: linhvuong.31221026306@st.ueh.edu.vn
@@ -139,4 +139,5 @@ The workflow of this project is organized into multiple stages, with the followi
 4. Huynh Minh Thu
    * Email: thuhuynh.31231020999@st.ueh.edu.vn
    * Github: https://github.com/HuynhThu04
+5. Dang Ngoc Hoang Thanh - Supervisor
    
